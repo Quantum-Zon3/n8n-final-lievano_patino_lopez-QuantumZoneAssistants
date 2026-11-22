@@ -11,9 +11,9 @@
 
 * **Nombre del Proyecto:** Quantum Zone Assistants
 * **Integrantes del Equipo:**
-  * Liévano
-  * Patiño
-  * López
+  * Miguel Angel Liévano Buitrago
+  * Carlos Mario Patiño Ramirez
+  * Carlos Andrés López Perez
 * **Problema:** La recepción manual de correos electrónicos con solicitudes, consultas y soportes genera tiempos de respuesta elevados, falta de trazabilidad sobre qué mensajes han sido atendidos y pérdida de contexto cuando un usuario escribe nuevamente o consulta información almacenada en bases de datos.
 * **Objetivo:** Implementar un asistente automatizado en **n8n** impulsado por Inteligencia Artificial (Google Gemini) capaz de analizar correos entrantes, consultar información estructurada en Baserow, responder automáticamente al remitente, registrar una auditoría completa de cada interacción y gestionar fallos técnicos mediante contingencia automatizada.
 * **Alcance de la Versión Final:**
