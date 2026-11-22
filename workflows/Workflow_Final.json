@@ -1,0 +1,618 @@
+{
+  "name": "Quantum Zone Assistens",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "includeSpamTrash": true,
+          "includeDrafts": false,
+          "q": "-subject:\"[ALERTA N8N]\" -from:me"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1728,
+        512
+      ],
+      "id": "aabc2f2e-5f32-4cd2-b5a0-5277977fd8ce",
+      "name": "Gmail Trigger1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "51IqDYXICWgrc04r",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "02a398a7-7f5c-48be-86ef-0b6f824cab65",
+              "name": "cuerpo",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "cdd49c75-d942-4a83-9463-4666632a0e5e",
+              "name": "categoria",
+              "value": "={{ $json.labelIds[1] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -1504,
+        512
+      ],
+      "id": "32bde50b-6832-49fb-a708-81fbb51151a6",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.5-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.5-flash-lite"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Eres un asistente automatizado de gestión de correos. Tu tarea es procesar el email entrante utilizando OBLIGATORIAMENTE la herramienta de Baserow para traer las instrucciones de la categoría detectada.\n\nDatos de entrada:\n- Categoría del correo: {{ $json.categoria }}\n- Cuerpo del correo original: {{ $json.cuerpo }}\n\nPasos a seguir:\n1. Usa la herramienta de Baserow buscando exactamente por la Categoría recibida.\n2. Lee el campo \"accion_requerida\" e \"instrucciones_respuesta\" que te devuelva la base de datos.\n3. Ejecuta la acción y redacta la respuesta final basándote estrictamente en esas instrucciones.\n\nFormato de salida (Estricto JSON):\n{\n  \"accion\": \"aquí pones el valor de accion_requerida\",\n  \"respuesta\": \"aquí el correo redactado (o vacío si la acción es archivar)\"\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -1280,
+        512
+      ],
+      "id": "e84ebcb4-ffee-4ca5-92bd-5abaf2bf786e",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "kngdOFnbAK988N9Z",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "46660914-d49f-435a-bf29-55e2527f9321",
+              "name": "categoria",
+              "value": "={{ JSON.parse($json.content.parts[0].text).categoria }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -928,
+        400
+      ],
+      "id": "db052c77-c9e2-4b14-8383-ae15e3b7e687",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Eres un Agente de IA encargado de la gestión y redacción automatizada de respuestas para los correos electrónicos de nuestra empresa. Tu objetivo es procesar el correo entrante basándote estrictamente en la clasificación previa.\n\nRecibirás dos datos clave del paso anterior:\n- Categoría: {{ $json.categoria }}\n- Cuerpo del correo: {{ $('Gmail Trigger1').item.json.text }}\n\nPor favor, actúa de acuerdo a las siguientes directrices según la categoría indicada:\n\n1. Si la categoría es \"spam\":\n- Genera un objeto JSON con la orden de archivar. No redactes ningún correo.\n- Formato de salida: { \"accion\": \"archivar\", \"respuesta\": \"\" }\n\n2. Si la categoría es \"entregas_evidencias\":\n- Redacta una respuesta muy breve, cortés y profesional. Agradece al remitente por enviar los soportes o la evidencia de entrega y confírmale que el equipo la revisará a la brevedad.\n- Formato de salida: { \"accion\": \"enviar_correo\", \"respuesta\": \"Texto del correo aquí...\" }\n\n3. Si la categoría es \"preguntas\":\n- Redacta un correo electrónico de respuesta sumamente amable, claro y formal. Responde detalladamente a las dudas planteadas en el cuerpo del correo utilizando un tono corporativo pero cercano.\n- Formato de salida: { \"accion\": \"enviar_correo\", \"respuesta\": \"Texto del correo aquí...\" }\n\n4. Si la categoría es \"default\":\n- Redacta una respuesta estándar indicando que hemos recibido su correo y que un agente humano se pondrá en contacto en las próximas 24 horas laborables.\n- Formato de salida: { \"accion\": \"enviar_correo\", \"respuesta\": \"Texto del correo aquí...\" }\n\nREGLA ESTRICTA DE FORMATO:\nTu respuesta final debe ser obligatoriamente un JSON plano con los campos \"accion\" y \"respuesta\". No uses bloques de código markdown (```json).",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -640,
+        400
+      ],
+      "id": "a2b16cd3-877e-4758-8afc-cf21a71b41b6",
+      "name": "AI Agent",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -704,
+        608
+      ],
+      "id": "66744209-75a9-4b1a-bc60-3954208801c7",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "kngdOFnbAK988N9Z",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Useful for getting the specific response instructions for an email category. The input query must be the exact category name (e.g., 'spam', 'preguntas', 'entregas_evidencias', or 'default').",
+        "authentication": "databaseToken",
+        "tableId": 1310404,
+        "additionalOptions": {
+          "filters": {
+            "fields": [
+              {
+                "field": 12181893,
+                "value": "={{ $json.categoria }}}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.baserowTool",
+      "typeVersion": 1.1,
+      "position": [
+        -448,
+        608
+      ],
+      "id": "e63130a6-c25f-44d0-876a-b6108d794b24",
+      "name": "Get many rows in Baserow",
+      "notesInFlow": false,
+      "credentials": {
+        "baserowTokenApi": {
+          "id": "3C8K50rsfe05rG24",
+          "name": "Baserow Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Gmail Trigger1').item.json.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        -576,
+        608
+      ],
+      "id": "eeb0a934-d6ac-4b64-bbb0-e5d894a4fe7a",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ JSON.parse($json.output).accion }}",
+                    "rightValue": "enviar_correo",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "7a3e4af2-4d73-4053-8606-0917d88d567c"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -240,
+        320
+      ],
+      "id": "8e9cdd16-d4ee-4248-be9c-c55ab7047582",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "sendTo": "=info@example.com",
+        "subject": "=Re: {{ $node[\"Gmail Trigger1\"].json.subject }}",
+        "message": "={{ JSON.parse($node[\"AI Agent\"].json.output).respuesta }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -16,
+        320
+      ],
+      "id": "cf764091-d6f2-44ac-a6ee-bf33ff28f151",
+      "name": "Send a message",
+      "webhookId": "c48d15e4-ca91-4347-ba10-06b937e00e93",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "51IqDYXICWgrc04r",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "## SUB-PROCESO\n**Auditoria y Registro de Mensajes**",
+        "height": 96,
+        "width": 192
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        176,
+        160
+      ],
+      "id": "a0c7ddaf-d32a-48f7-a154-205f8f4bfd4f",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "81dff5f2-d1f3-49e0-b492-8533d8ca3fab",
+              "name": "fecha_error",
+              "value": "={{ $now.setZone('America/Bogota').toFormat('yyyy-MM-dd HH:mm:ss') }}",
+              "type": "string"
+            },
+            {
+              "id": "72889d43-3838-4195-bf69-58a8c5adb072",
+              "name": "mensaje_error",
+              "value": "={{ $json.error?.message || $json.message || 'Error desconocido en ejecución' }}",
+              "type": "string"
+            },
+            {
+              "id": "47e73295-f970-42b0-beb6-95bc8ca99aad",
+              "name": "nodo_origen",
+              "value": "={{ $json.error?.node?.name || 'Nodo crítico del flujo' }}",
+              "type": "string"
+            },
+            {
+              "id": "cee5e848-bd5d-4c60-9bdb-5198feff9b76",
+              "name": "correo_cliente",
+              "value": "={{ $('Gmail Trigger1').isExecuted ? $('Gmail Trigger1').item.json.from.value[0].address : 'No identificado' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -208,
+        864
+      ],
+      "id": "6daba588-b5fb-45f1-9656-5613adbe70fa",
+      "name": "Formatear Error"
+    },
+    {
+      "parameters": {
+        "authentication": "databaseToken",
+        "operation": "create",
+        "tableId": 1338125,
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": 12531995,
+              "fieldValue": "={{ $json.fecha_error }}"
+            },
+            {
+              "fieldId": 12531996,
+              "fieldValue": "={{ $json.nodo_origen }}"
+            },
+            {
+              "fieldId": 12531997,
+              "fieldValue": "={{ $json.mensaje_error }}"
+            },
+            {
+              "fieldId": 12532014,
+              "fieldValue": "={{ $json.correo_cliente }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.baserow",
+      "typeVersion": 1.1,
+      "position": [
+        48,
+        864
+      ],
+      "id": "7eca60e4-3437-42e2-b7c8-9d1076d6b984",
+      "name": "Guardar Log Error",
+      "credentials": {
+        "baserowTokenApi": {
+          "id": "3C8K50rsfe05rG24",
+          "name": "Baserow Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "databaseToken",
+        "operation": "create",
+        "tableId": 1338124,
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": 12531992,
+              "fieldValue": "={{ $('Gmail Trigger1').item.json.from.value[0].address }}"
+            },
+            {
+              "fieldId": 12531993,
+              "fieldValue": "={{ $now.setZone('America/Bogota').toFormat('yyyy-MM-dd HH:mm:ss') }}"
+            },
+            {
+              "fieldId": 12532003,
+              "fieldValue": "={{ $('Gmail Trigger1').item.json.text }}"
+            },
+            {
+              "fieldId": 12532004,
+              "fieldValue": "={{ $('AI Agent').item.json.output }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.baserow",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        304
+      ],
+      "id": "aec8cb07-1e85-47e5-9e1c-a9fa079af4f5",
+      "name": "Registrar Historial Mensaje",
+      "credentials": {
+        "baserowTokenApi": {
+          "id": "3C8K50rsfe05rG24",
+          "name": "Baserow Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "admin@example.com",
+        "subject": "🚨 [ALERTA N8N] Fallo en Quantum Zone Assistant",
+        "message": "=Se ha detectado un fallo en el flujo automatizado: \n- Fecha y hora: {{ $('Formatear Error').item.json.fecha_error }} \n- Nodo afectado: {{ $('Formatear Error').item.json.nodo_origen }} \n- Detalle técnico: {{ $('Formatear Error').item.json.mensaje_error }} \n- Cliente afectado: {{ $('Formatear Error').item.json.correo_cliente }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        864
+      ],
+      "id": "d2585a9d-c1d4-4776-9c69-08f7d7c56ec4",
+      "name": "Notificar Error Admin",
+      "webhookId": "11dd5e1a-1d24-4ce9-94df-f8951a63c83b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "51IqDYXICWgrc04r",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## MANEJADOR DE ERRORES  Y CONTINGENCIA\n",
+        "height": 96,
+        "width": 192,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        720
+      ],
+      "id": "8d4e4fa8-6290-45b9-9731-a18c8646212e",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Formatear Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows in Baserow": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Formatear Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Registrar Historial Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Formatear Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Error": {
+      "main": [
+        [
+          {
+            "node": "Guardar Log Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Log Error": {
+      "main": [
+        [
+          {
+            "node": "Notificar Error Admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "2e2b3088-f895-4b44-a669-fda1d822be3b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1a29cf9edfb0dc8c57b8b3cde76958d2a1d8641c69707ebd7653253da4d3d62d"
+  },
+  "nodeGroups": [],
+  "id": "HASuhAy4gvCBC61J",
+  "tags": []
+}
