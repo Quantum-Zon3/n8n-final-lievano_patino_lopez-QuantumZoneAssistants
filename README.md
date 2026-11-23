@@ -125,7 +125,7 @@ Cree exactamente las siguientes columnas:
   * Proceso Automatizado: [`documentacion/diagramas/Proceso_Automatizado.png`](documentacion/diagramas/Proceso_Automatizado.png)
 * **Bitácora de Pruebas (Clase 11):** [`pruebas/Bitacora_Clase_11_Pruebas.md`](pruebas/Bitacora_Clase_11_Pruebas.md)
 * **Carpeta de Evidencias:** [`pruebas/evidencias/`](pruebas/evidencias/)
-* **Presentación Ejecutiva (PDF):** [`presentacion/Presentacion_Proyecto_Final.pdf`](presentacion/Presentacion_Proyecto_Final.pdf)
+* **Presentación Ejecutiva (PDF):** [`presentacion/Presentacion_Proyecto_Fina.pdf`](presentacion/Quantum-Zone-AssistantsP.pdf)
 
 ### Limitaciones Conocidas
 * La herramienta `Get many rows in Baserow` conectada al `AI Agent` maneja internamente errores de consulta devolviendo una observación al modelo en lugar de detener el flujo; por ello, las excepciones críticas de infraestructura se capturan directamente en los nodos principales del canvas.
